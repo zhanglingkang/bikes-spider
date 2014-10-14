@@ -73,6 +73,7 @@
     $("#start-spider").click(function () {
         //向列表页面发起请求，获取到所有的自行车类型，并依此进行处理
         launchLink("http://www.cannondale.com/nam_en/2015/bikes/mountain", function (document) {
+            //获得需要遍历的自行车类型
             var typeList = document.querySelectorAll("#bikes-overlay ul.bike-tabs li a");
             [].forEach.call(typeList, function (a, index) {
                 var typeName = a.innerHTML;
@@ -96,24 +97,59 @@
 
                                     };
                                     try {
-                                        bike.features.h1 = document.querySelector(".bikeFeatures .tab_uppr_left .tgc").innerHTML;
-                                        bike.features.h1_value = document.querySelector(".bikeFeatures .tab_uppr_left").childNodes[2].textContent;
-                                        bike.features.h2 = document.querySelector(".bikeFeatures .tab_uppr_left .tic").innerHTML;
-                                        bike.features.h2_value = (function () {
-                                            var h2Value = {
+                                        if ( typeName == 'MOUNTAIN') {
+                                            //山地需单独爬取
+                                            bike.features.h1 = document.querySelector(".bikeFeatures .tab_uppr_left .tgc").innerHTML;
+                                            bike.features.h1_value = document.querySelector(".bikeFeatures .tab_uppr_left").childNodes[2].textContent;
+                                            bike.features.h2 = document.querySelector(".bikeFeatures .tab_uppr_left .tic").innerHTML;
+                                            bike.features.h2_value = (function () {
+                                                var h2Value = {
 
-                                            };
-                                            [].forEach.call(document.querySelector(".bikeFeatures .tab_uppr_left li"), function (li, index) {
-                                                h2Value["value_" + index] = li.innerHTML;
-                                            });
-                                            return h2Value;
-                                        }());
-                                        bike.features.h3 = document.querySelector(".bikeFeatures .rider_profile .tic").innerHTML;
-                                        bike.features.h3_value = document.querySelector(".bikeFeatures .rider_profile").childNodes[2].textContent;
+                                                };
+                                                [].forEach.call(document.querySelectorAll(".bikeFeatures .tab_uppr_left li"), function (li, index) {
+                                                    //console.log( li.innerHTML);
+                                                    h2Value["value_" + index] = li.innerHTML;
+                                                });
+                                                return h2Value;
+                                            }());
+                                            bike.features.h3 = document.querySelector(".bikeFeatures .rider_profile .tic").innerHTML;
+                                            bike.features.h3_value = document.querySelector(".bikeFeatures .rider_profile").childNodes[2].textContent;
+                                        } else if( typeName == 'ROAD') {
+                                            //公路
+                                            bike.features.h1 = document.querySelector(".bikeFeatures .tab_uppr_left h2").innerHTML;
+                                            if( document.querySelector(".bikeFeatures .tab_uppr_left").childNodes[5] != null)
+                                            {
+                                                bike.features.h1_value = document.querySelector(".bikeFeatures .tab_uppr_left").childNodes[5].textContent;
+                                            } else {
+                                                bike.features.h1_value = document.querySelector(".bikeFeatures .tab_uppr_left").childNodes[2].textContent;
+                                            }
+                                            if( document.querySelector(".bikeFeatures .tab_uppr_left h3") != null) {
+                                                bike.features.h2 = document.querySelector(".bikeFeatures .tab_uppr_left h3").innerHTML;
+                                                bike.features.h2_value = (function () {
+                                                    var h2Value = {
+
+                                                    };
+                                                    [].forEach.call(document.querySelectorAll(".bikeFeatures .tab_uppr_left li"), function (li, index) {
+                                                        //console.log( li.innerHTML);
+                                                        h2Value["value_" + index] = li.innerHTML;
+                                                    });
+                                                    return h2Value;
+                                                }());
+                                            }
+                                            bike.features.h3 = document.querySelector(".bikeFeatures .rider_profile .tgc").innerHTML;
+                                            if ( document.querySelector(".bikeFeatures .rider_profile p") != null) {
+                                                bike.features.h3_value = document.querySelector(".bikeFeatures .rider_profile p").innerText;
+                                            } else {
+                                                document.querySelector(".bikeFeatures .rider_profile").childNodes[2].textContent;
+                                            }
+                                        } else {
+                                            //其他
+                                        }
                                     } catch (e) {
+                                        console.log( bike.name);
                                         console.log(e);
                                     }
-                                    bike.technology = "";
+                                    bike.technology = {};
                                     bike.specifications = (function () {
                                         var specifications = {};
                                         [].forEach.call(document.querySelectorAll("#bike-specs .specItem"), function (specItem, index) {
@@ -123,7 +159,7 @@
                                     }());
                                     bike.picurl = (function () {
                                         var fileName = (bike.name + ".jpg").replace(/\s+/g, "");
-                                        writeImage(fileName, document.querySelector(".detailImage").getAttribute("src"));
+                                        writeImage(fileName, document.querySelector("#zoom-img-container img").getAttribute("src"));
                                         return fileName;
                                     }());
                                     bike.geometry = "";
